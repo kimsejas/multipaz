@@ -270,7 +270,10 @@ private suspend fun doDcRequestFlow(
     val responseEncryptionKey = Crypto.createEcPrivateKey(EcCurve.P256)
     val origin = TestAppConfiguration.getAppToAppOrigin()
     // According to OpenID4VP, Client ID must be set for signed requests and not for unsigned requests
-    val clientId = "web-origin:$origin"
+    val cert = appReaderKey.certChain?.certificates?.getOrNull(0)
+        ?: throw IllegalArgumentException("Certificate chain is missing or empty")
+    val certHash = Crypto.digest(Algorithm.SHA256, cert.encoded.toByteArray()).toBase64Url()
+    val clientId = "x509_hash:$certHash"
 
     val dcRequestObject = when (request) {
         is SingleDocumentCannedRequest -> {
